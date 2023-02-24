@@ -1,18 +1,18 @@
 class Message {
   final String message;
-  final String senderUserName;
+  final String sender;
   final DateTime dateSent;
 
   Message({
     required this.message,
-    required this.senderUserName,
+    required this.sender,
     required this.dateSent,
   });
 
   factory Message.fromJson(Map<String, dynamic> message) {
     return Message(
       message: message['message'],
-      senderUserName: message['senderUserName'],
+      sender: message['sender'],
       dateSent: DateTime.now(),
       // DateTime.fromMillisecondsSinceEpoch(message['dateSent'] * 1000),
     );

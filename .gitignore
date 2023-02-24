@@ -1,5 +1,6 @@
 node_modules
 lib/server/node_modules
+
 # Miscellaneous
 *.class
 *.log

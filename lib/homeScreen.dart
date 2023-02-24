@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 import 'package:provider/provider.dart';
 import 'package:socket_appliaction/Provider/homeScreen.provider.dart';
 import 'package:socket_appliaction/models/messageModel.dart';
@@ -30,7 +30,8 @@ class _HomeScreenState extends State<HomeScreen> {
     homescreenprovider.messages;
 
     _socket = IO.io(
-        "http://10.0.2.2:3000",
+        // "http://10.0.2.2:3000",
+        "http://127.0.0.1:3000",
         // If you're running the server locally and using the Android emulator,
         //then your server endpoint should be 10.0.2.2:8000
         //instead of localhost:8000
@@ -47,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _socket.onConnectError((data) => print("Connect ERROR : $data"));
     _socket.onDisconnect((data) => print("Socket.IO server Disconnected"));
     _socket.on('message', (data) {
-      print("DATE SENT : ${data}");
+      print("MESSAGE DATA : ${data}");
       Provider.of<HomeScreenProvider>(context, listen: false)
           .addNewMessage(Message.fromJson(data));
     });
@@ -98,11 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (context, index) {
                             final message =
                                 homeScreenProviderModel.messages[index];
+
+                            print("SENDER ---    " + message.sender.toString());
                             return Wrap(
-                              alignment:
-                                  message.senderUserName == widget.username
-                                      ? WrapAlignment.start
-                                      : WrapAlignment.end,
+                              alignment: message.sender == widget.username
+                                  ? WrapAlignment.end
+                                  : WrapAlignment.start,
                               children: [
                                 MessageSection(
                                   index: index,
@@ -219,11 +221,7 @@ class MessageSection extends StatelessWidget {
     return Card(
         color: Colors.white,
         child: Container(
-            // margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             color: Colors.transparent,
-            // alignment: ((index) % 2) == 0
-            //     ? Alignment.centerRight
-            //     : Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
