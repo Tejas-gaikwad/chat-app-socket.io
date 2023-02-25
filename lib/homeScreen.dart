@@ -1,11 +1,10 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
 import 'package:socket_appliaction/Provider/homeScreen.provider.dart';
 import 'package:socket_appliaction/models/messageModel.dart';
 import 'package:socket_appliaction/nameScreen.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -19,29 +18,53 @@ class _HomeScreenState extends State<HomeScreen> {
   // Making a variable as a resource to connecr with backend;
   late IO.Socket _socket;
 
+  var _fileUrl;
+
+  // Future chooseFile() async {
+  //   FilePickerResult? result = await FilePicker.platform.pickFiles();
+  //   _fileUrl = result?.files.single.path;
+  // }
+
   // text editing cntroller for sending the message
   TextEditingController _messageController = TextEditingController();
   @override
   void initState() {
     super.initState();
+
     final homescreenprovider =
         Provider.of<HomeScreenProvider>(context, listen: false);
 
     homescreenprovider.messages;
 
     _socket = IO.io(
-        // "http://10.0.2.2:3000",
-        "http://127.0.0.1:3000",
-        // If you're running the server locally and using the Android emulator,
-        //then your server endpoint should be 10.0.2.2:8000
-        //instead of localhost:8000
+        "http://10.0.2.2:3000", // FOR MOBILE APPS THIS iP SHOULD USE
+        // "http://127.0.0.1:3000", // FOR WEB THIS IP ADDRESS SHOULD USE AND
 
+//      If you're running the server locally and using the Android emulator,
+//      then your server endpoint should be 10.0.2.2:8000
+//      instead of localhost:8000
         IO.OptionBuilder().setTransports(['websocket']).setQuery(
             {'username': widget.username.toString()}).build());
     _connectSocket(); // Initializing in start of the app
   }
 
+//   Future<void> _deriveKey() async {
+// //1. Alice's public key
+//     Map<String, dynamic> publicjwk = json.decode(
+//         '{"kty": "EC", "crv": "P-256", "x": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "y": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}');
+//     EcdhPublicKey ecdhPublicKey =
+//         await EcdhPublicKey.importJsonWebKey(publicjwk, EllipticCurve.p256);
+// //2. Bob's private key
+//     Map<String, dynamic> privatejwk = json.decode(
+//         '{"kty": "EC", "crv": "P-256", "x": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "y": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "d": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}');
+//     EcdhPrivateKey ecdhPrivateKey =
+//         await EcdhPrivateKey.importJsonWebKey(privatejwk, EllipticCurve.p256);
+// //3. Generating cryptokey called deriveBits
+//     Uint8List derivedBits = await ecdhPrivateKey.deriveBits(256, ecdhPublicKey);
+//     print("CRYPTOKEY   ---   " + derivedBits.toString());
+//   }
   // Function to connect, disconnect and showinf errors when occured;
+
   _connectSocket() {
     print("START");
     _socket.onConnect((data) => print("Connection established"));
@@ -55,9 +78,28 @@ class _HomeScreenState extends State<HomeScreen> {
     print("END");
   }
 
-  sendMessage() {
+  final _key = '';
+  String encryptedText = '';
+  // late PlatformStringCryptor cryptor;
+  // Future<String> encrypt(String messageText) async {
+  //   print("BEFORE ENCRYPTED ---   " + messageText.toString());
+  //   cryptor = PlatformStringCryptor();
+  //   // final salt = await cryptor.generateSalt();
+  //   // print("SALT   ----   " + salt.toString());
+  //   final key = await cryptor.generateKeyFromPassword(widget.username, "salt");
+  //   final encrypted = await cryptor.encrypt(messageText, key);
+  //   setState(() {
+  //     final _key = key;
+  //     encryptedText = encrypted;
+  //   });
+  //   print("ENCRYPTED ---   " + encryptedText.toString());
+  //   return encrypted;
+  // }
+
+  sendMessage() async {
+    // final encryptedMessage = await encrypt(_messageController.text.trim());
     _socket.emit('message', {
-      'message': _messageController.text.trim(),
+      'message': _messageController.text.toString(),
       'sender': widget.username,
     });
     _messageController.clear();
@@ -100,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             final message =
                                 homeScreenProviderModel.messages[index];
 
-                            print("SENDER ---    " + message.sender.toString());
                             return Wrap(
                               alignment: message.sender == widget.username
                                   ? WrapAlignment.end
@@ -171,9 +212,11 @@ class _MessageInputSectionState extends State<MessageInputSection> {
         width: MediaQuery.of(context).size.width,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
+            Container(
+              height: 50,
+              width: MediaQuery.of(context).size.width / 1.3,
               child: Container(
                 height: 50,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -187,18 +230,27 @@ class _MessageInputSectionState extends State<MessageInputSection> {
                 ),
               ),
             ),
-            InkWell(
-              onTap: widget.ontapFunction,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                height: 50,
-                color: Color.fromARGB(255, 10, 50, 230),
-                child: Icon(
-                  Icons.send,
-                  color: Colors.white,
-                ),
-              ),
-            )
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Attachment(),
+                InkWell(
+                  onTap: widget.ontapFunction,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      height: 50,
+                      color: Color.fromARGB(255, 10, 50, 230),
+                      child: Icon(
+                        Icons.send,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
           ],
         ),
       ),
@@ -237,5 +289,27 @@ class MessageSection extends StatelessWidget {
                 ),
               ],
             )));
+  }
+}
+
+class Attachment extends StatelessWidget {
+  const Attachment({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Future chooseFile() async {
+    //   FilePickerResult? result = await FilePicker.platform.pickFiles();
+    //   _fileUrl = result?.files.single.path;
+    // }
+
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        height: 50,
+        alignment: Alignment.center,
+        child: Icon(Icons.attachment),
+      ),
+    );
   }
 }
